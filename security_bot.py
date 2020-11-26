@@ -3,6 +3,8 @@ import os
 import discord
 from dotenv import load_dotenv
 
+from bot_utils import *
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
@@ -27,6 +29,8 @@ async def on_message(message):
     #for faster testing, exit when user types "bye"
     if message.content == "bye":
         exit(0)
+    #Check if links exist in message
+    urls = findURLs(message.content)
     #If there is an attachment
     if message.attachments is not None:
         for attachment in message.attachments:
