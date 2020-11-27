@@ -4,6 +4,7 @@ import discord
 from dotenv import load_dotenv
 
 from bot_utils import *
+from file_scanner import scan_file
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -36,8 +37,12 @@ async def on_message(message):
         for attachment in message.attachments:
             print("\nAttachment detected\n")
             print(attachment.filename)
-            #Handle attachments here
-
-
+            #Save the attachment
+            await attachment.save(attachment.filename)
+            #Check if the attachment is secure
+            is_secure = await scan_file(attachment.filename)
+            #Lastly, delete the file 
+            os.remove(attachment.filename)
+            
 
 client.run(TOKEN)
