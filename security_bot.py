@@ -4,6 +4,7 @@ import discord
 from dotenv import load_dotenv
 
 from bot_utils import *
+from phishtank import PhishTank
 from file_scanner import scan_file
 
 load_dotenv()
@@ -11,6 +12,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
 client = discord.Client()
+db = PhishTank().get_phistank_db()
 
 @client.event
 async def on_ready():
@@ -30,8 +32,14 @@ async def on_message(message):
     #for faster testing, exit when user types "bye"
     if message.content == "bye":
         exit(0)
-    #Check if links exist in message
-    urls = findURLs(message.content)
+    # Check if links exist in message
+    urls_list = findURLs(message.content)
+    # Checks links in a list against phishing site database
+    if len(urls_list) != 0:
+        urls_info = PhishTank().check_urls(urls_list, db)
+        response = PhishTank().parse_response(urls_info)
+        if response is not None:
+            await message.channel.send(response)
     #If there is an attachment
     if message.attachments is not None:
         for attachment in message.attachments:
