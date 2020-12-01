@@ -51,6 +51,12 @@ async def on_message(message):
             is_secure = await scan_file(attachment.filename)
             #Lastly, delete the file 
             os.remove(attachment.filename)
-            
+
+            #If the attachment was not secure, delete the message
+            if not is_secure:
+                await message.delete()
+            #TODO: Figure out a good way to indicate that the file was checked
+            else:
+                pass
 
 client.run(TOKEN)
