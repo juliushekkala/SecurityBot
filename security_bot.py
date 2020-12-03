@@ -32,6 +32,20 @@ async def on_message(message):
     #for faster testing, exit when user types "bye"
     if message.content == "bye":
         exit(0)
+    if message.content.startswith("!"):
+        #might be a command
+        if message.content == "!secbot":
+            #Provide info on bots current status and settings
+            pass
+        elif message.content == "!secbotadmin":
+            #Provide extra info about bot, for debugging setting up
+            pass
+        elif message.content == "!check":
+            #Check previous message for links and files
+            pass
+        elif message.content == "!sechelp":
+            #List available commands for the user in question
+            pass
     # Check if links exist in message
     urls_list = findURLs(message.content)
     # Checks links in a list against phishing site database
