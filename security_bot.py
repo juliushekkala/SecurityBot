@@ -14,6 +14,10 @@ GUILD = os.getenv('DISCORD_GUILD')
 client = discord.Client()
 db = PhishTank().get_phistank_db()
 
+#Config load/creation
+config = getConfig()
+
+
 @client.event
 async def on_ready():
     guild = discord.utils.get(client.guilds, name=GUILD)
@@ -38,8 +42,11 @@ async def on_message(message):
             #Provide info on bots current status and settings
             pass
         elif message.content == "!secbotadmin":
-            #Provide extra info about bot, for debugging setting up
-            pass
+            #Provide extra info about bot, for debugging and setting up
+            response = "Current config: \n"
+            response += "GUILD = " + GUILD + "\n"
+            response += "Automatic scanning: " + str(config.getboolean("SCAN", "autoscan")) + "\n"
+            await message.channel.send(response)
         elif message.content == "!check":
             #Check previous message for links and files
             pass
