@@ -40,19 +40,38 @@ async def on_message(message):
         #might be a command
         if message.content == "!secbot":
             #Provide info on bots current status and settings
-            pass
+            response = "Current config: \n"
+            response += "Automatic scanning: " + str(config.getboolean("SCAN", "autoscan")) + "\n"
+            if config.getboolean("BOTREACT", "msgokreact"):
+                response += "Bot adds a reaction to safe links and attachments. \n"
+            if config.getboolean("BOTREACT", "msgokanswer"):
+                response += "Bot answers to safe links and messages. \n"
+            if config.getboolean("SCAN", "scanfile") and config.getboolean("SCAN", "scanlink"):
+                response += "Both links are files are checked. \n"
+            elif config.getboolean("SCAN", "scanfile"):
+                response += "Files are checked. \n"
+            elif config.getboolean("SCAN", "scanlink"):
+                response += "Links are checked. \n"
+            await message.channel.send(response)
         elif message.content == "!secbotadmin":
             #Provide extra info about bot, for debugging and setting up
             response = "Current config: \n"
             response += "GUILD = " + GUILD + "\n"
-            response += "Automatic scanning: " + str(config.getboolean("SCAN", "autoscan")) + "\n"
+            # Print config. Adapted from https://stackoverflow.com/a/50362738
+            configstring = str({section: dict(config[section]) for section in config.sections()})
+            response += configstring
             await message.channel.send(response)
         elif message.content == "!check":
             #Check previous message for links and files
-            pass
+            channel = client.get_channel(message.reference.channel_id)
+            suspmessageid = message.reference.message_id
+            suspmessage = await channel.fetch_message(suspmessageid)
+            print(suspmessage.content)
+            #TODO: Message checking here
         elif message.content == "!sechelp":
             #List available commands for the user in question
-            pass
+            response = "Hello! I am a security focused Discord Bot that checks links and files for dangerous elements.\n!secbot provides specific settings used in this server. \n!check can be used in a reply to verify a previous message"
+            await message.channel.send(response)
     # Check if links exist in message
     urls_list = findURLs(message.content)
     # Checks links in a list against phishing site database
