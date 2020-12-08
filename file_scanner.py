@@ -2,6 +2,7 @@
 import yara
 import json
 import os
+import subprocess
 
 '''Load YARA rules from a JSON file
 containing the YARA rule file locations'''
@@ -27,10 +28,32 @@ def load_rules():
 '''Scan a file
 Returns true, if no matches found
 Returns false, if at least one match
+
+If the file extension is pdf and using yextend is enabled
+in the config, use yextend 
+to scan the file as a proof-of-concept.
 '''
 async def scan_file(data):
+    
     #first, load the YARA rules
     rules = load_rules()
+    filename, file_extension = os.path.splitext(data)
+    print("File extension is " + str(file_extension))
+    if file_extension == ".pdf":
+        #Yara rules need to be in a folder called yara_rules
+        output = subprocess.check_output(["./yextend", "-r", "yara_rules/*", "-t", data, "-j"])
+        str_output = output.decode('utf-8')
+        cleaned_output = str_output.strip().replace("\n","")
+        cleaned_output = cleaned_output.replace("\\","")
+        json_output = json.loads(cleaned_output)
+        print(json_output)
+        try: 
+            if json_output[0]["yara_matches_found"] == True:
+                return False
+            else:
+                return True  
+        except KeyError:
+            return True  	
     matches = rules.match(data)
     print(matches)
     #If matches within the rules
