@@ -1,6 +1,7 @@
 # File for utility functions
 
 import re
+import configparser
 
 # The function finds URLs in given strings
 # Args: string inputString - the string with possible URLs
@@ -11,3 +12,31 @@ def findURLs(inputString):
     print(urls)
     return urls
 
+# Read config and create new one if does not exist
+# Returns ConfigParser
+def getConfig():
+    try:
+        f = open('config.ini')
+        f.close()
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        #TODO: Validity check for config
+        return config
+    except FileNotFoundError:
+        #Create new config file
+        return createBotConfig()
+
+# Function for creating the default config
+# Used if config not present
+# Returns new ConfigParser
+def createBotConfig():
+    config = configparser.ConfigParser()
+    config['BOTREACT'] = {'MsgOKReact': '1',
+                        'MsgOKReactType': 'U+1F44D',
+                        'MsgOKAnswer': '0'}
+    config['SCAN'] = {'Autoscan': '1',
+                    'ScanFile': '1',
+                    'ScanLink': '1'}
+    with open('config.ini', 'w') as configfile:
+        config.write(configfile)
+    return config
