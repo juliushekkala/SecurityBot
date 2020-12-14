@@ -10,9 +10,10 @@ from file_scanner import scan_file
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
+APIKEY = os.getenv('PHISHTANK_API_KEY')
 
 client = discord.Client()
-db = PhishTank().get_phistank_db()
+db, db_status = PhishTank().get_phistank_db(APIKEY)
 
 #Config load/creation
 config = getConfig()
@@ -27,15 +28,21 @@ async def on_ready():
 ''' On client message, the bot should check whether there are extensions and/or links '''
 @client.event 
 async def on_message(message):
+    global db
+    global db_status
+
     #ignore own messages
     if message.author == client.user:
         return 
+
     if message.content == "test":
         response = "Test succesful"
         await message.channel.send(response)
+
     #for faster testing, exit when user types "bye"
     if message.content == "bye":
         exit(0)
+
     if message.content.startswith("!"):
         #might be a command
         if message.content == "!secbot":
@@ -72,15 +79,30 @@ async def on_message(message):
             #List available commands for the user in question
             response = "Hello! I am a security focused Discord Bot that checks links and files for dangerous elements.\n!secbot provides specific settings used in this server. \n!check can be used in a reply to verify a previous message"
             await message.channel.send(response)
+        elif message.content == "!dbstatus":
+            response = "Phishing database status: {} \n Last updated: {}\n Status code: {}".format(db_status["status"], db_status["datetime"], db_status["status_code"])
+            await message.channel.send(response)
+        elif message.content == "!dbupdate":
+            db, db_status = PhishTank().get_phistank_db(APIKEY)
+            response = "Phishing database update result: {}\n Status code: {}".format(db_status["status"], db_status["status_code"])
+            await message.channel.send(response)
+
     # Check if links exist in message
     urls_list = findURLs(message.content)
-    # Checks links in a list against phishing site database
-    if len(urls_list) != 0:
+
+    # Checks for database errors and if database is up to date
+    if db_status["status"] == 'DatabaseError' or not(PhishTank().db_up_to_date(db_status["datetime"])):
+        if not(PhishTank().db_up_to_date(db_status["datetime"])):
+            db, db_status = PhishTank().get_phistank_db(APIKEY)
+
+    # Checks links in a list against up to date phishing site database
+    if len(urls_list) != 0 and db_status["status"] != 'DatabaseError':
         urls_info = PhishTank().check_urls(urls_list, db)
         response = PhishTank().parse_response(urls_info)
         if response is not None:
             await message.channel.send(response)
-    #If there is an attachment
+
+    # If there is an attachment
     if message.attachments is not None:
         for attachment in message.attachments:
             print("\nAttachment detected\n")
