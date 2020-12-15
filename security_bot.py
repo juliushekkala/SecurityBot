@@ -55,7 +55,7 @@ async def on_message(message):
             if config.getboolean("BOTREACT", "msgokanswer"):
                 response += "Bot answers to safe links and messages. \n"
             if config.getboolean("SCAN", "scanfile") and config.getboolean("SCAN", "scanlink"):
-                response += "Both links are files are checked. \n"
+                response += "Both links and files are checked. \n"
             elif config.getboolean("SCAN", "scanfile"):
                 response += "Files are checked. \n"
             elif config.getboolean("SCAN", "scanlink"):
@@ -73,11 +73,12 @@ async def on_message(message):
             await message.channel.send(response)
         elif message.content == "!check":
             #Check previous message for links and files
-            channel = client.get_channel(message.reference.channel_id)
-            suspmessageid = message.reference.message_id
-            suspmessage = await channel.fetch_message(suspmessageid)
-            print(suspmessage.content)
-            #TODO: Message checking here
+            if message.reference is not None:
+                channel = client.get_channel(message.reference.channel_id)
+                suspmessageid = message.reference.message_id
+                suspmessage = await channel.fetch_message(suspmessageid)
+                print(suspmessage.content)
+                await checkMessage(suspmessage)
         elif message.content == "!sechelp":
             #List available commands for the user in question
             response = "Hello! I am a security focused Discord Bot that checks links and files for dangerous elements.\n!secbot provides specific settings used in this server. \n!check can be used in a reply to verify a previous message"
@@ -89,41 +90,62 @@ async def on_message(message):
             db, db_status = PhishTank().get_phistank_db(APIKEY)
             response = "Phishing database update result: {}\n Status code: {}".format(db_status["status"], db_status["status_code"])
             await message.channel.send(response)
+    if config.getboolean("SCAN", "autoscan"):
+        await checkMessage(message)
+
+async def checkMessage(message):
+    global db
+    global db_status
+
+    safe = True
+    checked = False
 
     # Check if links exist in message
     urls_list = findURLs(message.content)
 
-    # Checks for database errors and if database is up to date
-    if db_status["status"] == 'DatabaseError' or not(PhishTank().db_up_to_date(db_status["datetime"])):
-        if not(PhishTank().db_up_to_date(db_status["datetime"])):
-            db, db_status = PhishTank().get_phistank_db(APIKEY)
+    if config.getboolean("SCAN", "scanlink") and (len(urls_list) != 0):
 
-    # Checks links in a list against up to date phishing site database
-    if len(urls_list) != 0 and db_status["status"] != 'DatabaseError':
-        urls_info = PhishTank().check_urls(urls_list, db)
-        response = PhishTank().parse_response(urls_info)
-        if response is not None:
+        # Checks for database errors and if database is up to date
+        if db_status["status"] == 'DatabaseError' or not(PhishTank().db_up_to_date(db_status["datetime"])):
+            if not(PhishTank().db_up_to_date(db_status["datetime"])):
+                db, db_status = PhishTank().get_phistank_db(APIKEY)
+
+        # Checks links in a list against up to date phishing site database
+        if len(urls_list) != 0 and db_status["status"] != 'DatabaseError':
+            urls_info = PhishTank().check_urls(urls_list, db)
+            response = PhishTank().parse_response(urls_info)
+            checked = True
+            if response is not None:
+                safe = False
+                
+
+    if config.getboolean("SCAN", "scanfile"):
+        # If there is an attachment
+        if message.attachments is not None:
+            for attachment in message.attachments:
+                print("\nAttachment detected\n")
+                print(attachment.filename)
+                #Save the attachment
+                await attachment.save(attachment.filename)
+                #Check if the attachment is secure
+                is_secure = await scan_file(attachment.filename, config)
+                #Lastly, delete the file 
+                os.remove(attachment.filename)
+                checked = True
+                if not is_secure:
+                    safe = False
+    
+    if not safe:
+        # Delete message
+        await message.delete()
+        response = "Possibly dangerous message was deleted"
+        await message.channel.send(response)
+    elif safe and checked:
+        # Nothing harmful found
+        if config.getboolean("BOTREACT", "msgokanswer"):
+            response = "Nothing dangerous found in message"
             await message.channel.send(response)
+        # Add react here
 
-    # If there is an attachment
-    if message.attachments is not None:
-        for attachment in message.attachments:
-            print("\nAttachment detected\n")
-            print(attachment.filename)
-            #Save the attachment
-            await attachment.save(attachment.filename)
-            #Check if the attachment is secure
-            is_secure = await scan_file(attachment.filename, config)
-            #Lastly, delete the file 
-            os.remove(attachment.filename)
-
-            #If the attachment was not secure, delete the message
-            if not is_secure:
-                await message.delete()
-                response = "Evil file was deleted by me, your friendly bot"
-                await message.channel.send(response)
-            #TODO: Figure out a good way to indicate that the file was checked
-            else:
-                pass
 
 client.run(TOKEN)
