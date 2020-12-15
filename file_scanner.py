@@ -29,17 +29,18 @@ def load_rules():
 Returns true, if no matches found
 Returns false, if at least one match
 
-If the file extension is pdf and using yextend is enabled
+If the file extension is pdf and using yextend to scan PDF files is enabled
 in the config, use yextend 
 to scan the file as a proof-of-concept.
 '''
-async def scan_file(data):
+async def scan_file(data, config):
     
     #first, load the YARA rules
     rules = load_rules()
     filename, file_extension = os.path.splitext(data)
     print("File extension is " + str(file_extension))
-    if file_extension == ".pdf":
+    #If the file extension is pdf and scanning pdf with yextend is enabled in the config
+    if file_extension == ".pdf" and config.getboolean("SCAN", "pdfscan"):
         #Yara rules need to be in a folder called yara_rules
         output = subprocess.check_output(["./yextend", "-r", "yara_rules/*", "-t", data, "-j"])
         str_output = output.decode('utf-8')

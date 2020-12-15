@@ -60,6 +60,8 @@ async def on_message(message):
                 response += "Files are checked. \n"
             elif config.getboolean("SCAN", "scanlink"):
                 response += "Links are checked. \n"
+            if config.getboolean("SCAN", "pdfscan"):
+                response += "Proof-of-concept checking of PDF files is enabled."
             await message.channel.send(response)
         elif message.content == "!secbotadmin":
             #Provide extra info about bot, for debugging and setting up
@@ -111,7 +113,7 @@ async def on_message(message):
             #Save the attachment
             await attachment.save(attachment.filename)
             #Check if the attachment is secure
-            is_secure = await scan_file(attachment.filename)
+            is_secure = await scan_file(attachment.filename, config)
             #Lastly, delete the file 
             os.remove(attachment.filename)
 

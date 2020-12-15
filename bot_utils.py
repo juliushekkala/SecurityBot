@@ -36,7 +36,8 @@ def createBotConfig():
                         'MsgOKAnswer': '0'}
     config['SCAN'] = {'Autoscan': '1',
                     'ScanFile': '1',
-                    'ScanLink': '1'}
+                    'ScanLink': '1',
+                    'PdfScan': '0'}
     with open('config.ini', 'w') as configfile:
         config.write(configfile)
     return config
