@@ -13,6 +13,7 @@ GUILD = os.getenv('DISCORD_GUILD')
 APIKEY = os.getenv('PHISHTANK_API_KEY')
 
 client = discord.Client()
+
 db, db_status = PhishTank().get_phistank_db(APIKEY)
 
 #Config load/creation
@@ -117,6 +118,8 @@ async def on_message(message):
             #If the attachment was not secure, delete the message
             if not is_secure:
                 await message.delete()
+                response = "Evil file was deleted by me, your friendly bot"
+                await message.channel.send(response)
             #TODO: Figure out a good way to indicate that the file was checked
             else:
                 pass
