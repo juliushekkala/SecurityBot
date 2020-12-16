@@ -2,6 +2,7 @@
 
 import re
 import configparser
+import os
 
 # The function finds URLs in given strings
 # Args: string inputString - the string with possible URLs
@@ -19,9 +20,22 @@ def getConfig():
         f = open('config.ini')
         f.close()
         config = configparser.ConfigParser()
-        config.read('config.ini')
+        config.read('config.ini', encoding='utf-8')
         #TODO: Validity check for config
-        return config
+        try:
+            if config.getboolean("BOTREACT", "msgokreact"):
+                config.get("BOTREACT", "msgokreacttype")
+            config.getboolean("BOTREACT", "msgokanswer")
+            config.getboolean("SCAN", "scanfile")
+            config.getboolean("SCAN", "scanlink")
+            config.getboolean("SCAN", "pdfscan")
+            config.getboolean("SCAN", "autoscan")
+            return config
+        except:
+            print("Config could be faulty. Creating a new one")
+            os.remove('config.ini')
+            return createBotConfig()
+
     except FileNotFoundError:
         #Create new config file
         return createBotConfig()
@@ -32,12 +46,12 @@ def getConfig():
 def createBotConfig():
     config = configparser.ConfigParser()
     config['BOTREACT'] = {'MsgOKReact': '1',
-                        'MsgOKReactType': 'U+1F44D',
+                        'MsgOKReactType': '\N{THUMBS UP SIGN}',
                         'MsgOKAnswer': '0'}
     config['SCAN'] = {'Autoscan': '1',
                     'ScanFile': '1',
                     'ScanLink': '1',
                     'PdfScan': '0'}
-    with open('config.ini', 'w') as configfile:
+    with open('config.ini', 'w', encoding='utf-8') as configfile:
         config.write(configfile)
     return config

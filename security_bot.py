@@ -146,6 +146,9 @@ async def checkMessage(message):
             response = "Nothing dangerous found in message"
             await message.channel.send(response)
         # Add react here
+        if config.getboolean("BOTREACT", "msgokreact"):
+            emoji = config.get("BOTREACT", "msgokreacttype")
+            await message.add_reaction(emoji)
 
 
 client.run(TOKEN)
