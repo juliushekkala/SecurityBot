@@ -109,7 +109,7 @@ async def checkMessage(message):
         if db_status["status"] == 'DatabaseError' or not(PhishTank().db_up_to_date(db_status["datetime"])):
             if not(PhishTank().db_up_to_date(db_status["datetime"])):
                 database, db_status = PhishTank().get_phistank_db(APIKEY)
-                if db_status["status"] == 'DatabaseError':
+                if db_status["status"] != 'DatabaseError':
                     db = database
 
         # Checks links in a list against up to date phishing site database
