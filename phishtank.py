@@ -48,7 +48,10 @@ class PhishTank():
         :return: json phishtank database
         '''
         try:
-            db_url = 'http://data.phishtank.com/data/%s/online-valid.json' %(api_key)
+            if api_key === "":
+                db_url = 'http://data.phishtank.com/data/online-valid.json'
+            else:
+                db_url = 'http://data.phishtank.com/data/%s/online-valid.json' %(api_key)
             print('Fetching phishing database from ', db_url)
             response = requests.get(db_url)
             print(response)
