@@ -87,7 +87,9 @@ async def on_message(message):
             response = "Phishing database status: {} \n Last updated: {}\n Status code: {}".format(db_status["status"], db_status["datetime"], db_status["status_code"])
             await message.channel.send(response)
         elif message.content == "!dbupdate":
-            db, db_status = PhishTank().get_phistank_db(APIKEY)
+            database, db_status = PhishTank().get_phistank_db(APIKEY)
+            if db_status["status"] != 'DatabaseError':
+                db = database
             response = "Phishing database update result: {}\n Status code: {}".format(db_status["status"], db_status["status_code"])
             await message.channel.send(response)
     if config.getboolean("SCAN", "autoscan"):
